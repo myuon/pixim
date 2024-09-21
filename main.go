@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -82,6 +81,13 @@ func main() {
 							imageView.Refresh()
 						},
 					},
+					{
+						Label: "Zoom 100%",
+						Action: func() {
+							imageView.Ratio = 1.0
+							imageView.Refresh()
+						},
+					},
 				},
 			},
 		},
@@ -116,6 +122,19 @@ func main() {
 				imageView.Refresh()
 			}
 		}
+		if mode == "Pencil" {
+			pos := e.Position
+			x := int(float64(pos.X) / imageView.Ratio)
+			y := int(float64(pos.Y) / imageView.Ratio)
+
+			if x < 0 || y < 0 || x >= imageView.Image.Bounds().Dx() || y >= imageView.Image.Bounds().Dy() {
+				return
+			}
+
+			imageView.Image.Set(x, y, color.Black)
+			imageView.Refresh()
+			mainCanvas.Refresh()
+		}
 	}
 	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
 		if mode == "Move" && dragging {
@@ -128,7 +147,6 @@ func main() {
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
 	}
-	mainCanvas.Resize(fyne.NewSize(400, 400))
 
 	content := container.NewHBox(
 		container.NewVBox(
@@ -149,6 +167,8 @@ func main() {
 	)
 	w.SetContent(content)
 
+	imageView.Refresh()
+
 	w.ShowAndRun()
 }
 
@@ -168,8 +188,7 @@ var _ desktop.Hoverable = (*MainCanvas)(nil)
 
 func NewMainCanvas(image *canvas.Image) *MainCanvas {
 	item := &MainCanvas{
-		Image:     image,
-		Container: container.New(layout.NewHBoxLayout(), image),
+		Image: image,
 	}
 	item.ExtendBaseWidget(item)
 
@@ -181,7 +200,7 @@ func (m *MainCanvas) MinSize() fyne.Size {
 }
 
 func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(m.Container)
+	return widget.NewSimpleRenderer(m.Image)
 }
 
 func (m *MainCanvas) Cursor() desktop.Cursor {
