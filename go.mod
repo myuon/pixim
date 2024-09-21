@@ -1,4 +1,4 @@
-module github.com/myuon/quick-pix
+module github.com/myuon/pixim
 
 go 1.22.0
 

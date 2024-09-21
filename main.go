@@ -11,8 +11,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
-	"github.com/myuon/quick-pix/pixim"
-	"github.com/myuon/quick-pix/widgets"
+	"github.com/myuon/pixim/pixim"
+	"github.com/myuon/pixim/widgets"
 )
 
 type EditorMode string
