@@ -88,8 +88,6 @@ func main() {
 		},
 	})
 
-	w.Resize(fyne.NewSize(400, 400))
-
 	cimg := canvas.NewImageFromImage(imageView.Image)
 	cimg.FillMode = canvas.ImageFillOriginal
 	cimg.ScaleMode = canvas.ImageScalePixels
@@ -123,6 +121,7 @@ func main() {
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X), float32(e.Position.Y-dragStart.Y)))
 		}
 	}
+	mainCanvas.Resize(fyne.NewSize(400, 400))
 
 	content := container.NewHBox(
 		container.NewVBox(
@@ -139,7 +138,7 @@ func main() {
 				mode = "Pencil"
 			}),
 		),
-		container.New(layout.NewCenterLayout(), mainCanvas),
+		mainCanvas,
 	)
 	w.SetContent(content)
 
@@ -149,24 +148,31 @@ func main() {
 type MainCanvas struct {
 	widget.BaseWidget
 	Image       *canvas.Image
+	Container   *fyne.Container
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
 }
 
 var _ fyne.Widget = (*MainCanvas)(nil)
+var _ desktop.Cursorable = (*MainCanvas)(nil)
 var _ desktop.Mouseable = (*MainCanvas)(nil)
 
 func NewMainCanvas(image *canvas.Image) *MainCanvas {
 	item := &MainCanvas{
-		Image: image,
+		Image:     image,
+		Container: container.New(layout.NewHBoxLayout(), image),
 	}
 	item.ExtendBaseWidget(item)
 
 	return item
 }
 
+func (m *MainCanvas) MinSize() fyne.Size {
+	return fyne.NewSize(400, 400)
+}
+
 func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(m.Image)
+	return widget.NewSimpleRenderer(m.Container)
 }
 
 func (m *MainCanvas) Cursor() desktop.Cursor {
