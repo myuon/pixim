@@ -44,6 +44,30 @@ func NewImageView() *ImageView {
 	}
 }
 
+func (i *ImageView) Fill(x, y int, color color.Color) {
+	original := i.Image.At(x, y)
+
+	i.Image.Set(x, y, color)
+
+	stack := []struct{ x, y int }{{x, y}}
+	for len(stack) > 0 {
+		pos := stack[0]
+		stack = stack[1:]
+
+		for _, d := range []struct{ x, y int }{{1, 0}, {0, 1}, {-1, 0}, {0, -1}} {
+			next := struct{ x, y int }{pos.x + d.x, pos.y + d.y}
+			if next.x < 0 || next.y < 0 || next.x >= i.Image.Bounds().Dx() || next.y >= i.Image.Bounds().Dy() {
+				continue
+			}
+
+			if i.Image.At(next.x, next.y) == original {
+				i.Image.Set(next.x, next.y, color)
+				stack = append(stack, next)
+			}
+		}
+	}
+}
+
 func main() {
 	imageView := NewImageView()
 	a := app.New()
@@ -123,6 +147,19 @@ func main() {
 				imageView.Ratio /= 2
 				imageView.Refresh()
 			}
+		}
+		if mode == "Fill" {
+			pos := e.Position
+			x := int(float64(pos.X) / imageView.Ratio)
+			y := int(float64(pos.Y) / imageView.Ratio)
+
+			if x < 0 || y < 0 || x >= imageView.Image.Bounds().Dx() || y >= imageView.Image.Bounds().Dy() {
+				return
+			}
+
+			imageView.Fill(x, y, imageView.Color)
+			imageView.Refresh()
+			mainCanvas.Refresh()
 		}
 		if mode == "Pencil" {
 			pos := e.Position
