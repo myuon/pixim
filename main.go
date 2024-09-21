@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 	"github.com/myuon/quick-pix/pixim"
+	"github.com/myuon/quick-pix/widgets"
 )
 
 type EditorMode string
@@ -141,15 +142,17 @@ func main() {
 		),
 		mainCanvas,
 	)
+	mainCanvas.Refresh()
 	w.SetContent(content)
 	w.ShowAndRun()
 }
 
 type MainCanvas struct {
 	widget.BaseWidget
-	Image *canvas.Image
-	Ratio float64
-	Color color.Color
+	Image  *canvas.Image
+	Widget fyne.CanvasObject
+	Ratio  float64
+	Color  color.Color
 
 	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
 	OnMouseUp   func(*desktop.MouseEvent)
@@ -162,10 +165,17 @@ var _ desktop.Mouseable = (*MainCanvas)(nil)
 var _ desktop.Hoverable = (*MainCanvas)(nil)
 
 func NewMainCanvas(image *canvas.Image) *MainCanvas {
+	background := widgets.NewCheckerPattern(
+		fyne.NewSize(400, 400),
+		fyne.NewSize(40, 40),
+	)
+	widget := container.New(&widgets.StackingLayout{}, background, image)
+
 	item := &MainCanvas{
-		Image: image,
-		Ratio: 1.0,
-		Color: color.Black,
+		Image:  image,
+		Widget: widget,
+		Ratio:  1.0,
+		Color:  color.Black,
 	}
 	item.ExtendBaseWidget(item)
 
@@ -177,9 +187,7 @@ func (m *MainCanvas) MinSize() fyne.Size {
 }
 
 func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(
-		container.New(&StackingLayout{}, m.Image),
-	)
+	return widget.NewSimpleRenderer(m.Widget)
 }
 
 func (m *MainCanvas) Cursor() desktop.Cursor {
@@ -217,30 +225,5 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
 	m.Image.Refresh()
-}
-
-type StackingLayout struct {
-}
-
-var _ fyne.Layout = (*StackingLayout)(nil)
-
-func (s *StackingLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	for _, o := range objects {
-		size := o.MinSize()
-		o.Resize(size)
-		o.Move(fyne.NewPos(0, 0))
-	}
-}
-
-func (s *StackingLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	w, h := float32(0), float32(0)
-
-	for _, o := range objects {
-		size := o.MinSize()
-
-		w = max(w, size.Width)
-		h = max(h, size.Height)
-	}
-
-	return fyne.NewSize(w, h)
+	m.Widget.Refresh()
 }
