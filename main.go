@@ -3,11 +3,13 @@ package main
 import (
 	"image"
 	"image/color"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -94,9 +96,87 @@ func main() {
 	imageView.Refresh = func() {
 		cimg.Resize(fyne.NewSize(float32(float64(imageView.Image.Bounds().Dx())*imageView.Ratio), float32(float64(imageView.Image.Bounds().Dy())*imageView.Ratio)))
 	}
+	imageView.Refresh()
 
-	content := container.New(layout.NewCenterLayout(), cimg)
+	mode := "Move"
+	dragStart := fyne.NewPos(0, 0)
+
+	mainCanvas := NewMainCanvas(cimg)
+	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent) {
+		if mode == "Move" {
+			dragStart = e.Position
+			log.Printf("Move: %v", dragStart)
+		}
+		if mode == "Magnifier" {
+			if e.Button == desktop.MouseButtonPrimary {
+				imageView.Ratio *= 2
+				imageView.Refresh()
+			} else if e.Button == desktop.MouseButtonSecondary {
+				imageView.Ratio /= 2
+				imageView.Refresh()
+			}
+		}
+	}
+	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
+		if mode == "Move" {
+			log.Printf("Move: %v %v", e.Position, dragStart)
+			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X), float32(e.Position.Y-dragStart.Y)))
+		}
+	}
+
+	content := container.NewHBox(
+		container.NewVBox(
+			widget.NewButton("Move", func() {
+				mode = "Move"
+			}),
+			widget.NewButton("Magnifier", func() {
+				mode = "Magnifier"
+			}),
+			widget.NewButton("Fill", func() {
+				mode = "Fill"
+			}),
+			widget.NewButton("Pencil", func() {
+				mode = "Pencil"
+			}),
+		),
+		container.New(layout.NewCenterLayout(), mainCanvas),
+	)
 	w.SetContent(content)
 
 	w.ShowAndRun()
+}
+
+type MainCanvas struct {
+	widget.BaseWidget
+	Image       *canvas.Image
+	OnMouseDown func(*desktop.MouseEvent)
+	OnMouseUp   func(*desktop.MouseEvent)
+}
+
+var _ fyne.Widget = (*MainCanvas)(nil)
+var _ desktop.Mouseable = (*MainCanvas)(nil)
+
+func NewMainCanvas(image *canvas.Image) *MainCanvas {
+	item := &MainCanvas{
+		Image: image,
+	}
+	item.ExtendBaseWidget(item)
+
+	return item
+}
+
+func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(m.Image)
+}
+
+func (m *MainCanvas) Cursor() desktop.Cursor {
+	return desktop.PointerCursor
+}
+
+func (m *MainCanvas) MouseDown(e *desktop.MouseEvent) {
+	m.OnMouseDown(e)
+}
+
+func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
+	m.OnMouseUp(e)
 }
