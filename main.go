@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
@@ -15,6 +16,7 @@ import (
 type ImageView struct {
 	Image   *image.RGBA
 	Ratio   float64
+	Color   color.Color
 	Refresh func()
 }
 
@@ -131,7 +133,7 @@ func main() {
 				return
 			}
 
-			imageView.Image.Set(x, y, color.Black)
+			imageView.Image.Set(x, y, imageView.Color)
 			imageView.Refresh()
 			mainCanvas.Refresh()
 		}
@@ -162,6 +164,16 @@ func main() {
 			widget.NewButton("Pencil", func() {
 				mode = "Pencil"
 			}),
+			widget.NewButton("Color", func() {
+				dialog.NewColorPicker(
+					"Select a color",
+					"foobar",
+					func(c color.Color) {
+						imageView.Color = c
+					},
+					w,
+				).Show()
+			}),
 		),
 		mainCanvas,
 	)
@@ -175,7 +187,6 @@ func main() {
 type MainCanvas struct {
 	widget.BaseWidget
 	Image       *canvas.Image
-	Container   *fyne.Container
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
 	OnMouseMove func(*desktop.MouseEvent)
