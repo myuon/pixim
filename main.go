@@ -12,10 +12,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func main() {
+type ImageView struct {
+	Image   *image.RGBA
+	Ratio   float64
+	Refresh func()
+}
+
+func NewImageView() *ImageView {
 	img := image.NewRGBA(image.Rect(0, 0, 64, 64))
 	size := 64
-	ratio := 1.0
 
 	// 市松模様を描画
 	blockSize := size / 8
@@ -30,12 +35,17 @@ func main() {
 		}
 	}
 
-	a := app.New()
-	w := a.NewWindow("Hello")
+	return &ImageView{
+		Image:   img,
+		Ratio:   1.0,
+		Refresh: func() {},
+	}
+}
 
-	cimg := canvas.NewImageFromImage(img)
-	cimg.FillMode = canvas.ImageFillOriginal
-	cimg.ScaleMode = canvas.ImageScalePixels
+func main() {
+	imageView := NewImageView()
+	a := app.New()
+	w := a.NewWindow("QuickPix")
 
 	w.SetMainMenu(&fyne.MainMenu{
 		Items: []*fyne.Menu{
@@ -60,15 +70,15 @@ func main() {
 					{
 						Label: "Zoom in",
 						Action: func() {
-							ratio *= 2
-							cimg.Resize(fyne.NewSize(float32(float64(size)*ratio), float32(float64(size)*ratio)))
+							imageView.Ratio *= 2
+							imageView.Refresh()
 						},
 					},
 					{
 						Label: "Zoom out",
 						Action: func() {
-							ratio /= 2
-							cimg.Resize(fyne.NewSize(float32(float64(size)*ratio), float32(float64(size)*ratio)))
+							imageView.Ratio /= 2
+							imageView.Refresh()
 						},
 					},
 				},
@@ -77,6 +87,13 @@ func main() {
 	})
 
 	w.Resize(fyne.NewSize(400, 400))
+
+	cimg := canvas.NewImageFromImage(imageView.Image)
+	cimg.FillMode = canvas.ImageFillOriginal
+	cimg.ScaleMode = canvas.ImageScalePixels
+	imageView.Refresh = func() {
+		cimg.Resize(fyne.NewSize(float32(float64(imageView.Image.Bounds().Dx())*imageView.Ratio), float32(float64(imageView.Image.Bounds().Dy())*imageView.Ratio)))
+	}
 
 	content := container.New(layout.NewCenterLayout(), cimg)
 	w.SetContent(content)
