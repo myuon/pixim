@@ -3,7 +3,6 @@ package main
 import (
 	"image"
 	"image/color"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -97,13 +96,16 @@ func main() {
 	imageView.Refresh()
 
 	mode := "Move"
+	dragging := false
 	dragStart := fyne.NewPos(0, 0)
+	originalPos := cimg.Position()
 
 	mainCanvas := NewMainCanvas(cimg)
 	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent) {
 		if mode == "Move" {
+			dragging = true
 			dragStart = e.Position
-			log.Printf("Move: %v", dragStart)
+			originalPos = cimg.Position()
 		}
 		if mode == "Magnifier" {
 			if e.Button == desktop.MouseButtonPrimary {
@@ -115,10 +117,15 @@ func main() {
 			}
 		}
 	}
+	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
+		if mode == "Move" && dragging {
+			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
+		}
+	}
 	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
 		if mode == "Move" {
-			log.Printf("Move: %v %v", e.Position, dragStart)
-			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X), float32(e.Position.Y-dragStart.Y)))
+			dragging = false
+			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
 	}
 	mainCanvas.Resize(fyne.NewSize(400, 400))
@@ -151,11 +158,13 @@ type MainCanvas struct {
 	Container   *fyne.Container
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
+	OnMouseMove func(*desktop.MouseEvent)
 }
 
 var _ fyne.Widget = (*MainCanvas)(nil)
 var _ desktop.Cursorable = (*MainCanvas)(nil)
 var _ desktop.Mouseable = (*MainCanvas)(nil)
+var _ desktop.Hoverable = (*MainCanvas)(nil)
 
 func NewMainCanvas(image *canvas.Image) *MainCanvas {
 	item := &MainCanvas{
@@ -185,4 +194,14 @@ func (m *MainCanvas) MouseDown(e *desktop.MouseEvent) {
 
 func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
 	m.OnMouseUp(e)
+}
+
+func (m *MainCanvas) MouseMoved(e *desktop.MouseEvent) {
+	m.OnMouseMove(e)
+}
+
+func (m *MainCanvas) MouseIn(e *desktop.MouseEvent) {
+}
+
+func (m *MainCanvas) MouseOut() {
 }
