@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -172,17 +173,25 @@ func NewMainCanvas(img *canvas.Image) *MainCanvas {
 		fyne.NewSize(400, 400),
 		fyne.NewSize(40, 40),
 	)
-	grid := canvas.NewRasterWithPixels(func(x, y, _, _ int) color.Color {
+	grid := canvas.NewRaster(func(w, h int) image.Image {
+		img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 		if ratio < 5 {
-			return color.Transparent
+			return img
 		}
 
-		if x%int(ratio) == 0 || y%int(ratio) == 0 {
-			return color.RGBA{0, 0, 0, 0x20}
-		} else {
-			return color.Transparent
+		for i := 0; i < 400; i++ {
+			for j := 0; j < 400; j++ {
+				if i%int(ratio) == 0 || j%int(ratio) == 0 {
+					img.Set(i, j, color.RGBA{0, 0, 0, 0x20})
+				}
+			}
 		}
+
+		return img
 	})
+	grid.Resize(fyne.NewSize(400, 400))
+	grid.ScaleMode = canvas.ImageScalePixels
+
 	widget := container.New(&widgets.StackingLayout{}, background, img, grid)
 
 	item := &MainCanvas{
@@ -239,7 +248,5 @@ func (m *MainCanvas) MouseOut() {
 
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
-	m.Grid.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
 	m.Widget.Refresh()
-	m.Grid.Refresh()
 }
