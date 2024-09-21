@@ -13,10 +13,19 @@ import (
 	"github.com/myuon/quick-pix/pixim"
 )
 
+type EditorMode string
+
+const (
+	Move      EditorMode = "Move"
+	Magnifier EditorMode = "Magnifier"
+	Fill      EditorMode = "Fill"
+	Pencil    EditorMode = "Pencil"
+)
+
 func main() {
 	pixImage := pixim.NewPixImage()
 	a := app.New()
-	w := a.NewWindow("QuickPix")
+	w := a.NewWindow("Pixim")
 
 	w.SetMainMenu(&fyne.MainMenu{
 		Items: []*fyne.Menu{
@@ -42,19 +51,19 @@ func main() {
 	cimg.FillMode = canvas.ImageFillOriginal
 	cimg.ScaleMode = canvas.ImageScalePixels
 
-	mode := "Move"
+	mode := Move
 	dragging := false
 	dragStart := fyne.NewPos(0, 0)
 	originalPos := cimg.Position()
 
 	mainCanvas := NewMainCanvas(cimg)
 	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent, x, y int, contains bool) {
-		if mode == "Move" {
+		if mode == Move {
 			dragging = true
 			dragStart = e.Position
 			originalPos = cimg.Position()
 		}
-		if mode == "Magnifier" {
+		if mode == Magnifier {
 			if e.Button == desktop.MouseButtonPrimary {
 				mainCanvas.Ratio *= 2
 				mainCanvas.Refresh()
@@ -63,7 +72,7 @@ func main() {
 				mainCanvas.Refresh()
 			}
 		}
-		if mode == "Fill" {
+		if mode == Fill {
 			if !contains {
 				return
 			}
@@ -71,7 +80,7 @@ func main() {
 			pixImage.Fill(x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
 		}
-		if mode == "Pencil" {
+		if mode == Pencil {
 			if !contains {
 				return
 			}
@@ -83,10 +92,10 @@ func main() {
 		}
 	}
 	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent, x, y int, contains bool) {
-		if mode == "Move" && dragging {
+		if mode == Move && dragging {
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
-		if mode == "Pencil" && dragging {
+		if mode == Pencil && dragging {
 			if !contains {
 				return
 			}
@@ -96,11 +105,11 @@ func main() {
 		}
 	}
 	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
-		if mode == "Move" {
+		if mode == Move {
 			dragging = false
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
-		if mode == "Pencil" {
+		if mode == Pencil {
 			dragging = false
 		}
 	}
@@ -108,16 +117,16 @@ func main() {
 	content := container.NewHBox(
 		container.NewVBox(
 			widget.NewButton("Move", func() {
-				mode = "Move"
+				mode = Move
 			}),
 			widget.NewButton("Magnifier", func() {
-				mode = "Magnifier"
+				mode = Magnifier
 			}),
 			widget.NewButton("Fill", func() {
-				mode = "Fill"
+				mode = Fill
 			}),
 			widget.NewButton("Pencil", func() {
-				mode = "Pencil"
+				mode = Pencil
 			}),
 			widget.NewButton("Color", func() {
 				dialog.NewColorPicker(
