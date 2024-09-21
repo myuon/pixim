@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -14,10 +15,7 @@ import (
 )
 
 type ImageView struct {
-	Image   *image.RGBA
-	Ratio   float64
-	Color   color.Color
-	Refresh func()
+	Image *image.RGBA
 }
 
 func NewImageView() *ImageView {
@@ -38,9 +36,7 @@ func NewImageView() *ImageView {
 	}
 
 	return &ImageView{
-		Image:   img,
-		Ratio:   1.0,
-		Refresh: func() {},
+		Image: img,
 	}
 }
 
@@ -90,42 +86,12 @@ func main() {
 					},
 				},
 			},
-			{
-				Label: "View",
-				Items: []*fyne.MenuItem{
-					{
-						Label: "Zoom in",
-						Action: func() {
-							imageView.Ratio *= 2
-							imageView.Refresh()
-						},
-					},
-					{
-						Label: "Zoom out",
-						Action: func() {
-							imageView.Ratio /= 2
-							imageView.Refresh()
-						},
-					},
-					{
-						Label: "Zoom 100%",
-						Action: func() {
-							imageView.Ratio = 1.0
-							imageView.Refresh()
-						},
-					},
-				},
-			},
 		},
 	})
 
 	cimg := canvas.NewImageFromImage(imageView.Image)
 	cimg.FillMode = canvas.ImageFillOriginal
 	cimg.ScaleMode = canvas.ImageScalePixels
-	imageView.Refresh = func() {
-		cimg.Resize(fyne.NewSize(float32(float64(imageView.Image.Bounds().Dx())*imageView.Ratio), float32(float64(imageView.Image.Bounds().Dy())*imageView.Ratio)))
-	}
-	imageView.Refresh()
 
 	mode := "Move"
 	dragging := false
@@ -141,37 +107,35 @@ func main() {
 		}
 		if mode == "Magnifier" {
 			if e.Button == desktop.MouseButtonPrimary {
-				imageView.Ratio *= 2
-				imageView.Refresh()
+				mainCanvas.Ratio *= 2
+				mainCanvas.Refresh()
 			} else if e.Button == desktop.MouseButtonSecondary {
-				imageView.Ratio /= 2
-				imageView.Refresh()
+				mainCanvas.Ratio /= 2
+				mainCanvas.Refresh()
 			}
 		}
 		if mode == "Fill" {
 			pos := e.Position
-			x := int(float64(pos.X) / imageView.Ratio)
-			y := int(float64(pos.Y) / imageView.Ratio)
+			x := int(float64(pos.X) / mainCanvas.Ratio)
+			y := int(float64(pos.Y) / mainCanvas.Ratio)
 
 			if x < 0 || y < 0 || x >= imageView.Image.Bounds().Dx() || y >= imageView.Image.Bounds().Dy() {
 				return
 			}
 
-			imageView.Fill(x, y, imageView.Color)
-			imageView.Refresh()
+			imageView.Fill(x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
 		}
 		if mode == "Pencil" {
 			pos := e.Position
-			x := int(float64(pos.X) / imageView.Ratio)
-			y := int(float64(pos.Y) / imageView.Ratio)
+			x := int(float64(pos.X) / mainCanvas.Ratio)
+			y := int(float64(pos.Y) / mainCanvas.Ratio)
 
 			if x < 0 || y < 0 || x >= imageView.Image.Bounds().Dx() || y >= imageView.Image.Bounds().Dy() {
 				return
 			}
 
-			imageView.Image.Set(x, y, imageView.Color)
-			imageView.Refresh()
+			imageView.Image.Set(x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
 		}
 	}
@@ -206,7 +170,7 @@ func main() {
 					"Select a color",
 					"foobar",
 					func(c color.Color) {
-						imageView.Color = c
+						mainCanvas.Color = c
 					},
 					w,
 				).Show()
@@ -215,15 +179,15 @@ func main() {
 		mainCanvas,
 	)
 	w.SetContent(content)
-
-	imageView.Refresh()
-
 	w.ShowAndRun()
 }
 
 type MainCanvas struct {
 	widget.BaseWidget
-	Image       *canvas.Image
+	Image *canvas.Image
+	Ratio float64
+	Color color.Color
+
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
 	OnMouseMove func(*desktop.MouseEvent)
@@ -237,6 +201,8 @@ var _ desktop.Hoverable = (*MainCanvas)(nil)
 func NewMainCanvas(image *canvas.Image) *MainCanvas {
 	item := &MainCanvas{
 		Image: image,
+		Ratio: 1.0,
+		Color: color.Black,
 	}
 	item.ExtendBaseWidget(item)
 
@@ -271,4 +237,12 @@ func (m *MainCanvas) MouseIn(e *desktop.MouseEvent) {
 }
 
 func (m *MainCanvas) MouseOut() {
+}
+
+func (m *MainCanvas) Refresh() {
+	log.Printf("refresh: %v %v", m.Image.Image.Bounds(), m.Ratio)
+
+	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
+	m.Image.Refresh()
+	m.BaseWidget.Refresh()
 }
