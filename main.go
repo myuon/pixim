@@ -177,7 +177,9 @@ func (m *MainCanvas) MinSize() fyne.Size {
 }
 
 func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(m.Image)
+	return widget.NewSimpleRenderer(
+		container.New(&StackingLayout{}, m.Image),
+	)
 }
 
 func (m *MainCanvas) Cursor() desktop.Cursor {
@@ -215,4 +217,30 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
 	m.Image.Refresh()
+}
+
+type StackingLayout struct {
+}
+
+var _ fyne.Layout = (*StackingLayout)(nil)
+
+func (s *StackingLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		size := o.MinSize()
+		o.Resize(size)
+		o.Move(fyne.NewPos(0, 0))
+	}
+}
+
+func (s *StackingLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	w, h := float32(0), float32(0)
+
+	for _, o := range objects {
+		size := o.MinSize()
+
+		w = max(w, size.Width)
+		h = max(h, size.Height)
+	}
+
+	return fyne.NewSize(w, h)
 }
