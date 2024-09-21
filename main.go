@@ -224,6 +224,5 @@ func (m *MainCanvas) MouseOut() {
 
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
-	m.Image.Refresh()
 	m.Widget.Refresh()
 }
