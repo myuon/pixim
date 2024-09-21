@@ -66,10 +66,10 @@ func main() {
 		}
 		if mode == Magnifier {
 			if e.Button == desktop.MouseButtonPrimary {
-				mainCanvas.Ratio *= 2
+				*mainCanvas.Ratio *= 2
 				mainCanvas.Refresh()
 			} else if e.Button == desktop.MouseButtonSecondary {
-				mainCanvas.Ratio /= 2
+				*mainCanvas.Ratio /= 2
 				mainCanvas.Refresh()
 			}
 		}
@@ -150,8 +150,9 @@ func main() {
 type MainCanvas struct {
 	widget.BaseWidget
 	Image  *canvas.Image
+	Grid   *canvas.Raster
 	Widget fyne.CanvasObject
-	Ratio  float64
+	Ratio  *float64
 	Color  color.Color
 
 	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
@@ -164,17 +165,31 @@ var _ desktop.Cursorable = (*MainCanvas)(nil)
 var _ desktop.Mouseable = (*MainCanvas)(nil)
 var _ desktop.Hoverable = (*MainCanvas)(nil)
 
-func NewMainCanvas(image *canvas.Image) *MainCanvas {
+func NewMainCanvas(img *canvas.Image) *MainCanvas {
+	ratio := 1.0
+
 	background := widgets.NewCheckerPattern(
 		fyne.NewSize(400, 400),
 		fyne.NewSize(40, 40),
 	)
-	widget := container.New(&widgets.StackingLayout{}, background, image)
+	grid := canvas.NewRasterWithPixels(func(x, y, _, _ int) color.Color {
+		if ratio < 5 {
+			return color.Transparent
+		}
+
+		if x%int(ratio) == 0 || y%int(ratio) == 0 {
+			return color.RGBA{0, 0, 0, 0x20}
+		} else {
+			return color.Transparent
+		}
+	})
+	widget := container.New(&widgets.StackingLayout{}, background, img, grid)
 
 	item := &MainCanvas{
-		Image:  image,
+		Image:  img,
+		Grid:   grid,
 		Widget: widget,
-		Ratio:  1.0,
+		Ratio:  &ratio,
 		Color:  color.Black,
 	}
 	item.ExtendBaseWidget(item)
@@ -196,8 +211,8 @@ func (m *MainCanvas) Cursor() desktop.Cursor {
 
 func (m *MainCanvas) MouseDown(e *desktop.MouseEvent) {
 	pos := e.Position
-	x := int(float64(pos.X) / m.Ratio)
-	y := int(float64(pos.Y) / m.Ratio)
+	x := int(float64(pos.X) / *m.Ratio)
+	y := int(float64(pos.Y) / *m.Ratio)
 	contains := !(x < 0 || y < 0 || x >= m.Image.Image.Bounds().Dx() || y >= m.Image.Image.Bounds().Dy())
 
 	m.OnMouseDown(e, x, y, contains)
@@ -209,8 +224,8 @@ func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
 
 func (m *MainCanvas) MouseMoved(e *desktop.MouseEvent) {
 	pos := e.Position
-	x := int(float64(pos.X) / m.Ratio)
-	y := int(float64(pos.Y) / m.Ratio)
+	x := int(float64(pos.X) / *m.Ratio)
+	y := int(float64(pos.Y) / *m.Ratio)
 	contains := !(x < 0 || y < 0 || x >= m.Image.Image.Bounds().Dx() || y >= m.Image.Image.Bounds().Dy())
 
 	m.OnMouseMove(e, x, y, contains)
@@ -223,6 +238,8 @@ func (m *MainCanvas) MouseOut() {
 }
 
 func (m *MainCanvas) Refresh() {
-	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
+	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
+	m.Grid.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
 	m.Widget.Refresh()
+	m.Grid.Refresh()
 }
