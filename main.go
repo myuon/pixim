@@ -10,10 +10,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+	"github.com/myuon/quick-pix/pixim"
 )
 
 func main() {
-	pixImage := NewPixImage()
+	pixImage := pixim.NewPixImage()
 	a := app.New()
 	w := a.NewWindow("QuickPix")
 
@@ -47,7 +48,7 @@ func main() {
 	originalPos := cimg.Position()
 
 	mainCanvas := NewMainCanvas(cimg)
-	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent) {
+	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent, x, y int, contains bool) {
 		if mode == "Move" {
 			dragging = true
 			dragStart = e.Position
@@ -63,11 +64,7 @@ func main() {
 			}
 		}
 		if mode == "Fill" {
-			pos := e.Position
-			x := int(float64(pos.X) / mainCanvas.Ratio)
-			y := int(float64(pos.Y) / mainCanvas.Ratio)
-
-			if x < 0 || y < 0 || x >= pixImage.Image.Bounds().Dx() || y >= pixImage.Image.Bounds().Dy() {
+			if !contains {
 				return
 			}
 
@@ -75,11 +72,7 @@ func main() {
 			mainCanvas.Refresh()
 		}
 		if mode == "Pencil" {
-			pos := e.Position
-			x := int(float64(pos.X) / mainCanvas.Ratio)
-			y := int(float64(pos.Y) / mainCanvas.Ratio)
-
-			if x < 0 || y < 0 || x >= pixImage.Image.Bounds().Dx() || y >= pixImage.Image.Bounds().Dy() {
+			if !contains {
 				return
 			}
 
@@ -89,16 +82,12 @@ func main() {
 			dragging = true
 		}
 	}
-	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
+	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent, x, y int, contains bool) {
 		if mode == "Move" && dragging {
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
 		if mode == "Pencil" && dragging {
-			pos := e.Position
-			x := int(float64(pos.X) / mainCanvas.Ratio)
-			y := int(float64(pos.Y) / mainCanvas.Ratio)
-
-			if x < 0 || y < 0 || x >= pixImage.Image.Bounds().Dx() || y >= pixImage.Image.Bounds().Dy() {
+			if !contains {
 				return
 			}
 
@@ -153,9 +142,9 @@ type MainCanvas struct {
 	Ratio float64
 	Color color.Color
 
-	OnMouseDown func(*desktop.MouseEvent)
+	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
 	OnMouseUp   func(*desktop.MouseEvent)
-	OnMouseMove func(*desktop.MouseEvent)
+	OnMouseMove func(*desktop.MouseEvent, int, int, bool)
 }
 
 var _ fyne.Widget = (*MainCanvas)(nil)
@@ -187,7 +176,12 @@ func (m *MainCanvas) Cursor() desktop.Cursor {
 }
 
 func (m *MainCanvas) MouseDown(e *desktop.MouseEvent) {
-	m.OnMouseDown(e)
+	pos := e.Position
+	x := int(float64(pos.X) / m.Ratio)
+	y := int(float64(pos.Y) / m.Ratio)
+	contains := !(x < 0 || y < 0 || x >= m.Image.Image.Bounds().Dx() || y >= m.Image.Image.Bounds().Dy())
+
+	m.OnMouseDown(e, x, y, contains)
 }
 
 func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
@@ -195,7 +189,12 @@ func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
 }
 
 func (m *MainCanvas) MouseMoved(e *desktop.MouseEvent) {
-	m.OnMouseMove(e)
+	pos := e.Position
+	x := int(float64(pos.X) / m.Ratio)
+	y := int(float64(pos.Y) / m.Ratio)
+	contains := !(x < 0 || y < 0 || x >= m.Image.Image.Bounds().Dx() || y >= m.Image.Image.Bounds().Dy())
+
+	m.OnMouseMove(e, x, y, contains)
 }
 
 func (m *MainCanvas) MouseIn(e *desktop.MouseEvent) {
@@ -207,5 +206,4 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
 	m.Image.Refresh()
-	m.BaseWidget.Refresh()
 }

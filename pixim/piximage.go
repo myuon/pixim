@@ -1,4 +1,4 @@
-package main
+package pixim
 
 import (
 	"image"
@@ -13,11 +13,9 @@ func NewPixImage() *PixImage {
 	img := image.NewRGBA(image.Rect(0, 0, 64, 64))
 	size := 64
 
-	// 市松模様を描画
 	blockSize := size / 8
 	for y := 0; y < size; y++ {
 		for x := 0; x < size; x++ {
-			// x, y の座標に応じて色を決める（黒と白の市松模様）
 			if (x/blockSize+y/blockSize)%2 == 0 {
 				img.Set(x, y, color.White)
 			} else {
