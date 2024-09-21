@@ -52,3 +52,16 @@ func (i *PixImage) Fill(x, y int, color color.Color) {
 		}
 	}
 }
+
+func (i *PixImage) DrawLine(x1, y1 int, x2, y2 int, color color.Color) {
+	dx := x2 - x1
+	dy := y2 - y1
+	steps := max(dx, dy)
+
+	for s := 0; s < steps; s++ {
+		x := x1 + s*dx/steps
+		y := y1 + s*dy/steps
+
+		i.Image.Set(x, y, color)
+	}
+}

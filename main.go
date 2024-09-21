@@ -58,6 +58,8 @@ func main() {
 	dragStart := fyne.NewPos(0, 0)
 	originalPos := cimg.Position()
 
+	prevPos := fyne.NewPos(0, 0)
+
 	mainCanvas := NewMainCanvas(cimg)
 	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent, x, y int, contains bool) {
 		if mode == Move {
@@ -90,6 +92,8 @@ func main() {
 			pixImage.Image.Set(x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
 
+			prevPos = fyne.NewPos(float32(x), float32(y))
+
 			dragging = true
 		}
 	}
@@ -102,8 +106,10 @@ func main() {
 				return
 			}
 
-			pixImage.Image.Set(x, y, mainCanvas.Color)
+			pixImage.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
+
+			prevPos = fyne.NewPos(float32(x), float32(y))
 		}
 	}
 	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
