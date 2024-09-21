@@ -3,7 +3,6 @@ package main
 import (
 	"image"
 	"image/color"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -137,17 +136,34 @@ func main() {
 
 			imageView.Image.Set(x, y, mainCanvas.Color)
 			mainCanvas.Refresh()
+
+			dragging = true
 		}
 	}
 	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
 		if mode == "Move" && dragging {
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
+		if mode == "Pencil" && dragging {
+			pos := e.Position
+			x := int(float64(pos.X) / mainCanvas.Ratio)
+			y := int(float64(pos.Y) / mainCanvas.Ratio)
+
+			if x < 0 || y < 0 || x >= imageView.Image.Bounds().Dx() || y >= imageView.Image.Bounds().Dy() {
+				return
+			}
+
+			imageView.Image.Set(x, y, mainCanvas.Color)
+			mainCanvas.Refresh()
+		}
 	}
 	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
 		if mode == "Move" {
 			dragging = false
 			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
+		}
+		if mode == "Pencil" {
+			dragging = false
 		}
 	}
 
@@ -240,8 +256,6 @@ func (m *MainCanvas) MouseOut() {
 }
 
 func (m *MainCanvas) Refresh() {
-	log.Printf("refresh: %v %v", m.Image.Image.Bounds(), m.Ratio)
-
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())*m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())*m.Ratio)))
 	m.Image.Refresh()
 	m.BaseWidget.Refresh()
