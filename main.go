@@ -50,7 +50,6 @@ func main() {
 	})
 
 	cimg := canvas.NewImageFromImage(pixImage.Image)
-	cimg.FillMode = canvas.ImageFillOriginal
 	cimg.ScaleMode = canvas.ImageScalePixels
 
 	mode := Move
@@ -157,13 +156,14 @@ func main() {
 
 type MainCanvas struct {
 	widget.BaseWidget
-	Image         *canvas.Image
-	Grid          *canvas.Raster
-	Widget        fyne.CanvasObject
-	Ratio         *float64
-	Color         color.Color
-	ContainerSize fyne.Size
-	ImagePosition fyne.Position
+	Image           *canvas.Image
+	ScrollContainer *container.Scroll
+	Grid            *canvas.Raster
+	Widget          fyne.CanvasObject
+	Ratio           *float64
+	Color           color.Color
+	ContainerSize   fyne.Size
+	ImagePosition   fyne.Position
 
 	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
 	OnMouseUp   func(*desktop.MouseEvent)
@@ -201,15 +201,27 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 	grid.Resize(containerSize)
 	grid.ScaleMode = canvas.ImageScalePixels
 
-	widget := container.New(&widgets.StackingLayout{}, background, img, grid)
+	imgContainer := container.New(&widgets.StackingLayout{}, img)
+	imgContainer.Resize(containerSize)
+
+	scrollContainer := container.NewScroll(imgContainer)
+	scrollContainer.Resize(containerSize)
+
+	widget := container.New(
+		&widgets.StackingLayout{},
+		background,
+		// grid,
+		scrollContainer,
+	)
 
 	item := &MainCanvas{
-		Image:         img,
-		Grid:          grid,
-		Widget:        widget,
-		Ratio:         &ratio,
-		Color:         color.Black,
-		ContainerSize: containerSize,
+		Image:           img,
+		ScrollContainer: scrollContainer,
+		Grid:            grid,
+		Widget:          widget,
+		Ratio:           &ratio,
+		Color:           color.Black,
+		ContainerSize:   containerSize,
 	}
 	item.ExtendBaseWidget(item)
 
@@ -257,12 +269,11 @@ func (m *MainCanvas) MouseOut() {
 }
 
 func (m *MainCanvas) Refresh() {
+	m.Image.SetMinSize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
-	m.Widget.Refresh()
+	m.ScrollContainer.Refresh()
 }
 
 func (m *MainCanvas) MoveImage(pos fyne.Position) {
 	m.ImagePosition = pos
-	m.Image.Move(pos)
-	m.Grid.Move(pos)
 }
