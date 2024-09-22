@@ -28,9 +28,10 @@ const (
 )
 
 type Editor struct {
-	Image *pixim.PixImage
-	Ratio float64
-	View  fyne.CanvasObject
+	Image        *pixim.PixImage
+	Ratio        float64
+	CurrentColor color.Color
+	View         fyne.CanvasObject
 
 	OnChangeImage func(*pixim.PixImage)
 	OnChangeRatio func(float64)
@@ -46,18 +47,18 @@ func (e *Editor) SetImage(img *pixim.PixImage) {
 	e.OnChangeImage(img)
 }
 
-func (e *Editor) Fill(x, y int, color color.Color) {
-	e.Image.Fill(x, y, color)
+func (e *Editor) Fill(x, y int) {
+	e.Image.Fill(x, y, e.CurrentColor)
 	e.OnChangeImage(e.Image)
 }
 
-func (e *Editor) Paint(x, y int, color color.Color) {
-	e.Image.Set(x, y, color)
+func (e *Editor) Paint(x, y int) {
+	e.Image.Set(x, y, e.CurrentColor)
 	e.OnChangeImage(e.Image)
 }
 
-func (e *Editor) DrawLine(x1, y1, x2, y2 int, color color.Color) {
-	e.Image.DrawLine(x1, y1, x2, y2, color)
+func (e *Editor) DrawLine(x1, y1, x2, y2 int) {
+	e.Image.DrawLine(x1, y1, x2, y2, e.CurrentColor)
 	e.OnChangeImage(e.Image)
 }
 
@@ -66,9 +67,10 @@ func main() {
 	w := a.NewWindow("Pixim")
 
 	editor := Editor{
-		Image: pixim.NewPixImage(),
-		Ratio: 1.0,
-		View:  nil,
+		Image:        pixim.NewPixImage(),
+		Ratio:        1.0,
+		CurrentColor: color.Black,
+		View:         nil,
 	}
 
 	containerSize := fyne.NewSize(800, 800)
@@ -127,8 +129,6 @@ func main() {
 
 	prevPos := fyne.NewPos(0, 0)
 
-	var currentColor color.Color = color.Transparent
-
 	editor.OnChangeRatio = func(ratio float64) {
 		imageCanvas.Resize(fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio)))
 		imageCanvas.Refresh()
@@ -164,14 +164,14 @@ func main() {
 				return
 			}
 
-			editor.Fill(x, y, currentColor)
+			editor.Fill(x, y)
 		}
 		if mode == Pencil {
 			if !contains {
 				return
 			}
 
-			editor.Paint(x, y, currentColor)
+			editor.Paint(x, y)
 			prevPos = fyne.NewPos(float32(x), float32(y))
 
 			dragging = true
@@ -191,7 +191,7 @@ func main() {
 				return
 			}
 
-			editor.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, currentColor)
+			editor.DrawLine(int(prevPos.X), int(prevPos.Y), x, y)
 			prevPos = fyne.NewPos(float32(x), float32(y))
 		}
 	}
@@ -307,7 +307,7 @@ func main() {
 					"Select a color",
 					"foobar",
 					func(c color.Color) {
-						currentColor = c
+						editor.CurrentColor = c
 					},
 					w,
 				).Show()
