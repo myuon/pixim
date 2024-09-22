@@ -86,39 +86,47 @@ func main() {
 		fyne.NewSize(40, 40),
 	)
 
-	grid := widgets.NewCachedRaster(
-		func() any {
-			return editor.Ratio
-		},
-		func(w, h int) image.Image {
-			img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
-			for i := 0; i < int(containerSize.Width); i++ {
-				for j := 0; j < int(containerSize.Height); j++ {
-					if i%int(editor.Ratio) == 0 || j%int(editor.Ratio) == 0 {
-						img.Set(i, j, color.RGBA{0xd0, 0xd0, 0xd0, 0xff})
-					}
-				}
-			}
+	gridColor := color.RGBA{0xd0, 0xd0, 0xd0, 0xff}
 
-			return img
-		},
+	linesV := []fyne.CanvasObject{}
+	for i := 0; i < editor.Image.Image.Bounds().Dx(); i++ {
+		if i%int(editor.Ratio) == 0 {
+			line := canvas.NewLine(gridColor)
+			line.StrokeWidth = 1
+			line.Resize(fyne.NewSize(0, containerSize.Height))
+
+			linesV = append(linesV, line)
+		}
+	}
+
+	linesH := []fyne.CanvasObject{}
+	for i := 0; i < editor.Image.Image.Bounds().Dy(); i++ {
+		if i%int(editor.Ratio) == 0 {
+			line := canvas.NewLine(gridColor)
+			line.StrokeWidth = 1
+			line.Resize(fyne.NewSize(containerSize.Width, 0))
+
+			linesH = append(linesH, line)
+		}
+	}
+
+	gridLines := container.New(
+		&widgets.StackingLayout{},
+		container.New(&widgets.StripeVLayout{}, linesV...),
+		container.New(&widgets.StripeHLayout{}, linesH...),
 	)
-	grid.Hide()
-	grid.ScaleMode = canvas.ImageScalePixels
+	gridLines.Hide()
 
 	imageCanvas := widgets.NewImageCanvas(editor.Image)
 
-	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, grid)
+	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, gridLines)
 	imgContainer.Resize(containerSize)
 
 	scrollContainer := container.NewScroll(imgContainer)
 	scrollContainer.Resize(containerSize)
 
-	children := container.New(
-		&widgets.StackingLayout{},
-		background,
-		scrollContainer,
-	)
+	children := container.New(&widgets.StackingLayout{}, background, scrollContainer)
+	children.Resize(containerSize)
 
 	mode := Move
 	dragging := false
@@ -133,10 +141,10 @@ func main() {
 		imageCanvas.Refresh()
 
 		if editor.Ratio < 5 {
-			grid.Hide()
+			gridLines.Hide()
 		} else {
-			grid.Resize(size)
-			grid.Show()
+			gridLines.Resize(size)
+			gridLines.Show()
 		}
 	}
 	editor.OnChangeImage = func(img *pixim.PixImage) {
@@ -302,6 +310,7 @@ func main() {
 	}
 
 	content := container.NewHBox(
+		mouseEventContainer,
 		container.NewVBox(
 			widget.NewButton("Move", func() {
 				mode = Move
@@ -327,7 +336,6 @@ func main() {
 			}),
 			colorRect,
 		),
-		mouseEventContainer,
 	)
 
 	w.SetContent(content)

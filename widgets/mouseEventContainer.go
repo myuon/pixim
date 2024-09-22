@@ -7,7 +7,7 @@ import (
 )
 
 type MouseEventContainer struct {
-	*fyne.Container
+	fyne.CanvasObject
 
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
@@ -19,16 +19,16 @@ var _ desktop.Cursorable = (*MouseEventContainer)(nil)
 var _ desktop.Mouseable = (*MouseEventContainer)(nil)
 var _ desktop.Hoverable = (*MouseEventContainer)(nil)
 
-func NewMouseEventContainer(chilren *fyne.Container) *MouseEventContainer {
+func NewMouseEventContainer(chilren fyne.CanvasObject) *MouseEventContainer {
 	item := &MouseEventContainer{
-		Container: chilren,
+		CanvasObject: chilren,
 	}
 
 	return item
 }
 
 func (m *MouseEventContainer) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(m.Container)
+	return widget.NewSimpleRenderer(m.CanvasObject)
 }
 
 func (m *MouseEventContainer) Cursor() desktop.Cursor {

@@ -8,6 +8,9 @@ type StackingLayout struct {
 var _ fyne.Layout = (*StackingLayout)(nil)
 
 func (s *StackingLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objects {
+		o.Resize(size)
+	}
 }
 
 func (s *StackingLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {

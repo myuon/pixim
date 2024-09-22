@@ -54,3 +54,7 @@ func NewCheckerPattern(
 func (c *CheckerPattern) MinSize() fyne.Size {
 	return c.ContainerSize
 }
+
+func (c *CheckerPattern) Size() fyne.Size {
+	return c.ContainerSize
+}
