@@ -99,7 +99,7 @@ func main() {
 	}
 	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent, x, y int, contains bool) {
 		if mode == Move && dragging {
-			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
+			mainCanvas.MoveImage(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
 		if mode == Pencil && dragging {
 			if !contains {
@@ -115,7 +115,7 @@ func main() {
 	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
 		if mode == Move {
 			dragging = false
-			cimg.Move(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
+			mainCanvas.MoveImage(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
 		}
 		if mode == Pencil {
 			dragging = false
@@ -163,6 +163,7 @@ type MainCanvas struct {
 	Ratio         *float64
 	Color         color.Color
 	ContainerSize fyne.Size
+	ImagePosition fyne.Position
 
 	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
 	OnMouseUp   func(*desktop.MouseEvent)
@@ -258,4 +259,10 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
 	m.Widget.Refresh()
+}
+
+func (m *MainCanvas) MoveImage(pos fyne.Position) {
+	m.ImagePosition = pos
+	m.Image.Move(pos)
+	m.Grid.Move(pos)
 }
