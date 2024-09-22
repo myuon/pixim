@@ -32,6 +32,10 @@ func (m *ImageCanvas) ReplaceImage(img *image.RGBA) {
 	m.Image.Image = img
 }
 
+func (m *ImageCanvas) SetViewerRatio(ratio float64) {
+	m.Image.Resize(fyne.NewSize(float32(m.PixImage.Image.Bounds().Dx())*float32(ratio), float32(m.PixImage.Image.Bounds().Dy())*float32(ratio)))
+}
+
 var _ fyne.Widget = (*ImageCanvas)(nil)
 
 func (m *ImageCanvas) CreateRenderer() fyne.WidgetRenderer {

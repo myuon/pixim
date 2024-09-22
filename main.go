@@ -91,7 +91,7 @@ func main() {
 			blockSize := 10
 			for y := 0; y < h; y++ {
 				for x := 0; x < w; x++ {
-					if (x/blockSize+y/blockSize)%2 == 1 {
+					if (x/blockSize+y/blockSize)%2 == 0 {
 						img.Set(x, y, color.RGBA{0, 0, 0, 0x20})
 					}
 				}
@@ -109,14 +109,18 @@ func main() {
 	gridLines.Hide()
 
 	imageCanvas := widgets.NewImageCanvas(editor.Image)
+	imageCanvas.SetViewerRatio(1.0)
 
-	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, gridLines)
+	imgContainer := container.New(&widgets.StackingLayout{SkipLayoutChildren: true}, imageCanvas, gridLines)
+
+	scrollPosition := fyne.NewPos(0, 0)
 
 	scrollContainer := container.NewScroll(imgContainer)
-	scrollPosition := fyne.NewPos(0, 0)
 	scrollContainer.OnScrolled = func(pos fyne.Position) {
 		scrollPosition = pos
 	}
+	scrollContainer.Resize(containerSize)
+	scrollContainer.SetMinSize(containerSize)
 
 	children := container.New(&widgets.StackingLayout{}, background, scrollContainer)
 	children.Resize(containerSize)
@@ -130,7 +134,7 @@ func main() {
 
 	editor.OnChangeRatio = func(ratio float64) {
 		size := fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio))
-		imageCanvas.Resize(size)
+		imageCanvas.SetViewerRatio(editor.Ratio)
 
 		if editor.Ratio < 5 {
 			gridLines.Hide()

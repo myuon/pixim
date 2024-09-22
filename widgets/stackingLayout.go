@@ -3,11 +3,16 @@ package widgets
 import "fyne.io/fyne/v2"
 
 type StackingLayout struct {
+	SkipLayoutChildren bool
 }
 
 var _ fyne.Layout = (*StackingLayout)(nil)
 
 func (s *StackingLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if s.SkipLayoutChildren {
+		return
+	}
+
 	for _, o := range objects {
 		o.Resize(size)
 		o.Move(fyne.NewPos(0, 0))
