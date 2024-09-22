@@ -28,10 +28,11 @@ const (
 )
 
 type Editor struct {
-	Image pixim.PixImage
+	Image *pixim.PixImage
 	Ratio float64
 	View  fyne.CanvasObject
 
+	OnChangeImage func(*pixim.PixImage)
 	OnChangeRatio func(float64)
 }
 
@@ -40,12 +41,32 @@ func (e *Editor) SetRatio(ratio float64) {
 	e.OnChangeRatio(ratio)
 }
 
+func (e *Editor) SetImage(img *pixim.PixImage) {
+	e.Image = img
+	e.OnChangeImage(img)
+}
+
+func (e *Editor) Fill(x, y int, color color.Color) {
+	e.Image.Fill(x, y, color)
+	e.OnChangeImage(e.Image)
+}
+
+func (e *Editor) Paint(x, y int, color color.Color) {
+	e.Image.Set(x, y, color)
+	e.OnChangeImage(e.Image)
+}
+
+func (e *Editor) DrawLine(x1, y1, x2, y2 int, color color.Color) {
+	e.Image.DrawLine(x1, y1, x2, y2, color)
+	e.OnChangeImage(e.Image)
+}
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Pixim")
 
 	editor := Editor{
-		Image: *pixim.NewPixImage(),
+		Image: pixim.NewPixImage(),
 		Ratio: 1.0,
 		View:  nil,
 	}
@@ -85,7 +106,7 @@ func main() {
 	grid.Resize(containerSize)
 	grid.ScaleMode = canvas.ImageScalePixels
 
-	imageCanvas := widgets.NewImageCanvas(pixim.NewPixImage())
+	imageCanvas := widgets.NewImageCanvas(editor.Image)
 
 	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, grid)
 	imgContainer.Resize(containerSize)
@@ -110,6 +131,10 @@ func main() {
 
 	editor.OnChangeRatio = func(ratio float64) {
 		imageCanvas.Resize(fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio)))
+		imageCanvas.Refresh()
+	}
+	editor.OnChangeImage = func(img *pixim.PixImage) {
+		imageCanvas.ReplaceImage(img.Image)
 		imageCanvas.Refresh()
 	}
 
@@ -139,17 +164,14 @@ func main() {
 				return
 			}
 
-			imageCanvas.PixImage.Fill(x, y, currentColor)
-			mainCanvas.Refresh()
+			editor.Fill(x, y, currentColor)
 		}
 		if mode == Pencil {
 			if !contains {
 				return
 			}
 
-			imageCanvas.PixImage.Set(x, y, currentColor)
-			mainCanvas.Refresh()
-
+			editor.Paint(x, y, currentColor)
 			prevPos = fyne.NewPos(float32(x), float32(y))
 
 			dragging = true
@@ -169,9 +191,7 @@ func main() {
 				return
 			}
 
-			imageCanvas.PixImage.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, currentColor)
-			mainCanvas.Refresh()
-
+			editor.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, currentColor)
 			prevPos = fyne.NewPos(float32(x), float32(y))
 		}
 	}
@@ -217,8 +237,7 @@ func main() {
 									}
 								}
 
-								imageCanvas.ReplaceImage(img)
-								mainCanvas.Refresh()
+								editor.SetImage(&pixim.PixImage{Image: img})
 							}, w)
 						},
 					},
@@ -237,8 +256,7 @@ func main() {
 									return
 								}
 
-								imageCanvas.ReplaceImage(img.(*image.RGBA))
-								mainCanvas.Refresh()
+								editor.SetImage(&pixim.PixImage{Image: img.(*image.RGBA)})
 							}, w).Show()
 						},
 					},
