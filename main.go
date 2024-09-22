@@ -28,17 +28,17 @@ const (
 )
 
 func main() {
-	pixImage := pixim.NewPixImage()
 	a := app.New()
 	w := a.NewWindow("Pixim")
 
+	pixImage := pixim.NewPixImage()
 	cimg := canvas.NewImageFromImage(pixImage.Image)
 	cimg.ScaleMode = canvas.ImageScalePixels
 
 	mode := Move
 	dragging := false
 	dragStart := fyne.NewPos(0, 0)
-	originalPos := cimg.Position()
+	originalPos := fyne.NewPos(0, 0)
 
 	prevPos := fyne.NewPos(0, 0)
 
@@ -129,12 +129,14 @@ func main() {
 								w, _ := strconv.Atoi(width.Text)
 								h, _ := strconv.Atoi(height.Text)
 
+								img := image.NewRGBA(image.Rect(0, 0, w, h))
 								for i := 0; i < w; i++ {
 									for j := 0; j < h; j++ {
-										pixImage.Image.Set(i, j, color.White)
+										img.Set(i, j, color.White)
 									}
 								}
 
+								mainCanvas.Canvas.ReplaceImage(&pixim.PixImage{Image: img})
 								mainCanvas.Refresh()
 							}, w)
 						},
@@ -223,6 +225,7 @@ type MainCanvas struct {
 	Color           color.Color
 	ContainerSize   fyne.Size
 	ImagePosition   fyne.Position
+	Canvas          widgets.ImageCanvas
 
 	OnMouseDown func(*desktop.MouseEvent, int, int, bool)
 	OnMouseUp   func(*desktop.MouseEvent)
@@ -270,7 +273,9 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 	grid.Resize(containerSize)
 	grid.ScaleMode = canvas.ImageScalePixels
 
-	imgContainer := container.New(&widgets.StackingLayout{}, img, grid)
+	imageCanvas := widgets.NewImageCanvas(pixim.NewPixImage())
+
+	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, grid)
 	imgContainer.Resize(containerSize)
 
 	scrollContainer := container.NewScroll(imgContainer)
@@ -279,14 +284,13 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 	widget := container.New(
 		&widgets.StackingLayout{},
 		background,
-		// grid,
 		scrollContainer,
 	)
 
 	item := &MainCanvas{
 		Image:           img,
 		ScrollContainer: scrollContainer,
-		Grid:            grid,
+		Grid:            nil,
 		Widget:          widget,
 		Ratio:           &ratio,
 		Color:           color.Black,
