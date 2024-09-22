@@ -27,11 +27,29 @@ const (
 	Pencil    EditorMode = "Pencil"
 )
 
+type Editor struct {
+	Image pixim.PixImage
+	Ratio float64
+	View  fyne.CanvasObject
+
+	OnChangeRatio func(float64)
+}
+
+func (e *Editor) SetRatio(ratio float64) {
+	e.Ratio = ratio
+	e.OnChangeRatio(ratio)
+}
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Pixim")
 
-	ratio := 1.0
+	editor := Editor{
+		Image: *pixim.NewPixImage(),
+		Ratio: 1.0,
+		View:  nil,
+	}
+
 	containerSize := fyne.NewSize(800, 800)
 
 	background := widgets.NewCheckerPattern(
@@ -42,25 +60,25 @@ func main() {
 	var gridCache image.Image
 	cachedRatio := 0.0
 	grid := canvas.NewRaster(func(w, h int) image.Image {
-		if gridCache != nil && cachedRatio == ratio {
+		if gridCache != nil && cachedRatio == editor.Ratio {
 			return gridCache
 		}
 
 		img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
-		if ratio < 5 {
+		if editor.Ratio < 5 {
 			return img
 		}
 
 		for i := 0; i < int(containerSize.Width); i++ {
 			for j := 0; j < int(containerSize.Height); j++ {
-				if i%int(ratio) == 0 || j%int(ratio) == 0 {
+				if i%int(editor.Ratio) == 0 || j%int(editor.Ratio) == 0 {
 					img.Set(i, j, color.RGBA{0xd0, 0xd0, 0xd0, 0xff})
 				}
 			}
 		}
 
 		gridCache = img
-		cachedRatio = ratio
+		cachedRatio = editor.Ratio
 
 		return img
 	})
@@ -90,11 +108,16 @@ func main() {
 
 	var currentColor color.Color = color.Transparent
 
+	editor.OnChangeRatio = func(ratio float64) {
+		imageCanvas.Resize(fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio)))
+		imageCanvas.Refresh()
+	}
+
 	mainCanvas := NewMainCanvas(children)
 	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent) {
 		pos := e.Position
-		x := int(float64(pos.X) / ratio)
-		y := int(float64(pos.Y) / ratio)
+		x := int(float64(pos.X) / editor.Ratio)
+		y := int(float64(pos.Y) / editor.Ratio)
 		contains := !(x < 0 || y < 0 || x >= imageCanvas.Image.Image.Bounds().Dx() || y >= imageCanvas.Image.Image.Bounds().Dy())
 
 		if mode == Move {
@@ -104,10 +127,10 @@ func main() {
 		}
 		if mode == Magnifier {
 			if e.Button == desktop.MouseButtonPrimary {
-				ratio *= 2
+				editor.SetRatio(editor.Ratio * 2)
 				mainCanvas.Refresh()
 			} else if e.Button == desktop.MouseButtonSecondary {
-				ratio /= 2
+				editor.SetRatio(editor.Ratio / 2)
 				mainCanvas.Refresh()
 			}
 		}
@@ -134,8 +157,8 @@ func main() {
 	}
 	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
 		pos := e.Position
-		x := int(float64(pos.X) / ratio)
-		y := int(float64(pos.Y) / ratio)
+		x := int(float64(pos.X) / editor.Ratio)
+		y := int(float64(pos.Y) / editor.Ratio)
 		contains := !(x < 0 || y < 0 || x >= imageCanvas.Image.Image.Bounds().Dx() || y >= imageCanvas.Image.Image.Bounds().Dy())
 
 		if mode == Move && dragging {
@@ -330,14 +353,3 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Container.Refresh()
 }
-
-// func (m *MainCanvas) Refresh() {
-// 	m.Image.SetMinSize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
-// 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
-// 	m.Image.Refresh()
-// 	m.Widget.Refresh()
-// }
-
-// func (m *MainCanvas) MoveImage(pos fyne.Position) {
-// 	m.ImagePosition = pos
-// }
