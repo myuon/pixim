@@ -155,7 +155,6 @@ func main() {
 	editor.OnChangeRatio = func(ratio float64) {
 		size := fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio))
 		imageCanvas.Resize(size)
-		imageCanvas.Refresh()
 
 		if editor.Ratio < 5 {
 			gridLines.Hide()
@@ -184,10 +183,8 @@ func main() {
 		if mode == Magnifier {
 			if e.Button == desktop.MouseButtonPrimary {
 				editor.SetRatio(editor.Ratio * 2)
-				mouseEventContainer.Refresh()
 			} else if e.Button == desktop.MouseButtonSecondary {
 				editor.SetRatio(editor.Ratio / 2)
-				mouseEventContainer.Refresh()
 			}
 		}
 		if mode == Fill {
