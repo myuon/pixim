@@ -335,14 +335,16 @@ func main() {
 				mode = Pencil
 			}),
 			widget.NewButton("Color", func() {
-				dialog.NewColorPicker(
+				picker := dialog.NewColorPicker(
 					"Select a color",
 					"foobar",
 					func(c color.Color) {
 						editor.SetCurrentColor(c)
 					},
 					w,
-				).Show()
+				)
+				picker.Advanced = true
+				picker.Show()
 			}),
 			colorRect,
 		),
