@@ -33,8 +33,9 @@ type Editor struct {
 	CurrentColor color.Color
 	View         fyne.CanvasObject
 
-	OnChangeImage func(*pixim.PixImage)
-	OnChangeRatio func(float64)
+	OnChangeImage        func(*pixim.PixImage)
+	OnChangeRatio        func(float64)
+	OnChangeCurrentColor func(color.Color)
 }
 
 func (e *Editor) SetRatio(ratio float64) {
@@ -60,6 +61,11 @@ func (e *Editor) Paint(x, y int) {
 func (e *Editor) DrawLine(x1, y1, x2, y2 int) {
 	e.Image.DrawLine(x1, y1, x2, y2, e.CurrentColor)
 	e.OnChangeImage(e.Image)
+}
+
+func (e *Editor) SetCurrentColor(c color.Color) {
+	e.CurrentColor = c
+	e.OnChangeCurrentColor(c)
 }
 
 func main() {
@@ -288,6 +294,13 @@ func main() {
 		},
 	})
 
+	colorRect := canvas.NewRectangle(editor.CurrentColor)
+	colorRect.SetMinSize(fyne.NewSize(40, 40))
+
+	editor.OnChangeCurrentColor = func(c color.Color) {
+		colorRect.FillColor = c
+	}
+
 	content := container.NewHBox(
 		container.NewVBox(
 			widget.NewButton("Move", func() {
@@ -307,11 +320,12 @@ func main() {
 					"Select a color",
 					"foobar",
 					func(c color.Color) {
-						editor.CurrentColor = c
+						editor.SetCurrentColor(c)
 					},
 					w,
 				).Show()
 			}),
+			colorRect,
 		),
 		mouseEventContainer,
 	)
