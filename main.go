@@ -142,7 +142,7 @@ func main() {
 		imageCanvas.Refresh()
 	}
 
-	mouseEventContainer := NewMouseEventContainer(children)
+	mouseEventContainer := widgets.NewMouseEventContainer(children)
 	mouseEventContainer.OnMouseDown = func(e *desktop.MouseEvent) {
 		pos := e.Position
 		x := int(float64(pos.X) / editor.Ratio)
@@ -323,51 +323,4 @@ func main() {
 
 	w.SetContent(content)
 	w.ShowAndRun()
-}
-
-type MouseEventContainer struct {
-	*fyne.Container
-
-	OnMouseDown func(*desktop.MouseEvent)
-	OnMouseUp   func(*desktop.MouseEvent)
-	OnMouseMove func(*desktop.MouseEvent)
-}
-
-var _ fyne.Widget = (*MouseEventContainer)(nil)
-var _ desktop.Cursorable = (*MouseEventContainer)(nil)
-var _ desktop.Mouseable = (*MouseEventContainer)(nil)
-var _ desktop.Hoverable = (*MouseEventContainer)(nil)
-
-func NewMouseEventContainer(chilren *fyne.Container) *MouseEventContainer {
-	item := &MouseEventContainer{
-		Container: chilren,
-	}
-
-	return item
-}
-
-func (m *MouseEventContainer) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(m.Container)
-}
-
-func (m *MouseEventContainer) Cursor() desktop.Cursor {
-	return desktop.PointerCursor
-}
-
-func (m *MouseEventContainer) MouseDown(e *desktop.MouseEvent) {
-	m.OnMouseDown(e)
-}
-
-func (m *MouseEventContainer) MouseUp(e *desktop.MouseEvent) {
-	m.OnMouseUp(e)
-}
-
-func (m *MouseEventContainer) MouseMoved(e *desktop.MouseEvent) {
-	m.OnMouseMove(e)
-}
-
-func (m *MouseEventContainer) MouseIn(e *desktop.MouseEvent) {
-}
-
-func (m *MouseEventContainer) MouseOut() {
 }
