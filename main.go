@@ -241,7 +241,14 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 		fyne.NewSize(containerSize.Width, containerSize.Height),
 		fyne.NewSize(40, 40),
 	)
+
+	var gridCache image.Image
+	cachedRatio := 0.0
 	grid := canvas.NewRaster(func(w, h int) image.Image {
+		if gridCache != nil && cachedRatio == ratio {
+			return gridCache
+		}
+
 		img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
 		if ratio < 5 {
 			return img
@@ -255,12 +262,15 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 			}
 		}
 
+		gridCache = img
+		cachedRatio = ratio
+
 		return img
 	})
 	grid.Resize(containerSize)
 	grid.ScaleMode = canvas.ImageScalePixels
 
-	imgContainer := container.New(&widgets.StackingLayout{}, img)
+	imgContainer := container.New(&widgets.StackingLayout{}, img, grid)
 	imgContainer.Resize(containerSize)
 
 	scrollContainer := container.NewScroll(imgContainer)
