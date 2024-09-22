@@ -81,9 +81,24 @@ func main() {
 
 	containerSize := fyne.NewSize(800, 800)
 
-	background := widgets.NewCheckerPattern(
-		fyne.NewSize(containerSize.Width, containerSize.Height),
-		fyne.NewSize(40, 40),
+	background := widgets.NewCachedRaster(
+		func() any {
+			return true
+		},
+		func(w, h int) image.Image {
+			img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+			blockSize := 10
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					if (x/blockSize+y/blockSize)%2 == 1 {
+						img.Set(x, y, color.RGBA{0, 0, 0, 0x20})
+					}
+				}
+			}
+
+			return img
+		},
 	)
 
 	gridColor := color.RGBA{0xd0, 0xd0, 0xd0, 0xff}
@@ -120,10 +135,8 @@ func main() {
 	imageCanvas := widgets.NewImageCanvas(editor.Image)
 
 	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, gridLines)
-	imgContainer.Resize(containerSize)
 
 	scrollContainer := container.NewScroll(imgContainer)
-	scrollContainer.Resize(containerSize)
 
 	children := container.New(&widgets.StackingLayout{}, background, scrollContainer)
 	children.Resize(containerSize)
