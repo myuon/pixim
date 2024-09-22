@@ -1,6 +1,8 @@
 package widgets
 
 import (
+	"image"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
@@ -25,10 +27,9 @@ func NewImageCanvas(img *pixim.PixImage) *ImageCanvas {
 	return item
 }
 
-func (m *ImageCanvas) ReplaceImage(pixImage *pixim.PixImage) {
-	m.PixImage = pixImage
-	m.Image.Image = pixImage.Image
-	m.Refresh()
+func (m *ImageCanvas) ReplaceImage(img *image.RGBA) {
+	m.PixImage = &pixim.PixImage{Image: img}
+	m.Image.Image = img
 }
 
 var _ fyne.Widget = (*ImageCanvas)(nil)

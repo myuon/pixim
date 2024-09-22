@@ -136,7 +136,7 @@ func main() {
 									}
 								}
 
-								mainCanvas.Canvas.ReplaceImage(&pixim.PixImage{Image: img})
+								mainCanvas.Canvas.ReplaceImage(img)
 								mainCanvas.Refresh()
 							}, w)
 						},
@@ -290,7 +290,8 @@ func NewMainCanvas(img *canvas.Image, containerSize fyne.Size) *MainCanvas {
 	item := &MainCanvas{
 		Image:           img,
 		ScrollContainer: scrollContainer,
-		Grid:            nil,
+		Grid:            grid,
+		Canvas:          *imageCanvas,
 		Widget:          widget,
 		Ratio:           &ratio,
 		Color:           color.Black,
