@@ -101,34 +101,10 @@ func main() {
 		},
 	)
 
-	gridColor := color.RGBA{0xd0, 0xd0, 0xd0, 0xff}
-
-	linesV := []fyne.CanvasObject{}
-	for i := 0; i < editor.Image.Image.Bounds().Dx(); i++ {
-		if i%int(editor.Ratio) == 0 {
-			line := canvas.NewLine(gridColor)
-			line.StrokeWidth = 1
-			line.Resize(fyne.NewSize(0, containerSize.Height))
-
-			linesV = append(linesV, line)
-		}
-	}
-
-	linesH := []fyne.CanvasObject{}
-	for i := 0; i < editor.Image.Image.Bounds().Dy(); i++ {
-		if i%int(editor.Ratio) == 0 {
-			line := canvas.NewLine(gridColor)
-			line.StrokeWidth = 1
-			line.Resize(fyne.NewSize(containerSize.Width, 0))
-
-			linesH = append(linesH, line)
-		}
-	}
-
-	gridLines := container.New(
-		&widgets.StackingLayout{},
-		container.New(&widgets.StripeVLayout{}, linesV...),
-		container.New(&widgets.StripeHLayout{}, linesH...),
+	gridLines := widgets.NewGridLinesContainer(
+		fyne.NewSize(float32(editor.Image.Image.Bounds().Dx()), float32(editor.Image.Image.Bounds().Dy())),
+		int(editor.Ratio),
+		color.RGBA{0xd0, 0xd0, 0xd0, 0xff},
 	)
 	gridLines.Hide()
 
