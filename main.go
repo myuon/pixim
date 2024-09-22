@@ -80,27 +80,23 @@ func main() {
 		fyne.NewSize(40, 40),
 	)
 
-	var gridCache image.Image
-	cachedRatio := 0.0
-	grid := canvas.NewRaster(func(w, h int) image.Image {
-		if gridCache != nil && cachedRatio == editor.Ratio {
-			return gridCache
-		}
-
-		img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
-		for i := 0; i < int(containerSize.Width); i++ {
-			for j := 0; j < int(containerSize.Height); j++ {
-				if i%int(editor.Ratio) == 0 || j%int(editor.Ratio) == 0 {
-					img.Set(i, j, color.RGBA{0xd0, 0xd0, 0xd0, 0xff})
+	grid := widgets.NewCachedRaster(
+		func() any {
+			return editor.Ratio
+		},
+		func(w, h int) image.Image {
+			img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
+			for i := 0; i < int(containerSize.Width); i++ {
+				for j := 0; j < int(containerSize.Height); j++ {
+					if i%int(editor.Ratio) == 0 || j%int(editor.Ratio) == 0 {
+						img.Set(i, j, color.RGBA{0xd0, 0xd0, 0xd0, 0xff})
+					}
 				}
 			}
-		}
 
-		gridCache = img
-		cachedRatio = editor.Ratio
-
-		return img
-	})
+			return img
+		},
+	)
 	grid.Hide()
 	grid.ScaleMode = canvas.ImageScalePixels
 
