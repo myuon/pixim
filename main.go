@@ -137,6 +137,10 @@ func main() {
 	imgContainer := container.New(&widgets.StackingLayout{}, imageCanvas, gridLines)
 
 	scrollContainer := container.NewScroll(imgContainer)
+	scrollPosition := fyne.NewPos(0, 0)
+	scrollContainer.OnScrolled = func(pos fyne.Position) {
+		scrollPosition = pos
+	}
 
 	children := container.New(&widgets.StackingLayout{}, background, scrollContainer)
 	children.Resize(containerSize)
@@ -167,7 +171,7 @@ func main() {
 
 	mouseEventContainer := widgets.NewMouseEventContainer(children)
 	mouseEventContainer.OnMouseDown = func(e *desktop.MouseEvent) {
-		pos := e.Position
+		pos := e.Position.Add(scrollPosition)
 		x := int(float64(pos.X) / editor.Ratio)
 		y := int(float64(pos.Y) / editor.Ratio)
 		contains := !(x < 0 || y < 0 || x >= imageCanvas.Image.Image.Bounds().Dx() || y >= imageCanvas.Image.Image.Bounds().Dy())
@@ -205,7 +209,7 @@ func main() {
 		}
 	}
 	mouseEventContainer.OnMouseMove = func(e *desktop.MouseEvent) {
-		pos := e.Position
+		pos := e.Position.Add(scrollPosition)
 		x := int(float64(pos.X) / editor.Ratio)
 		y := int(float64(pos.Y) / editor.Ratio)
 		contains := !(x < 0 || y < 0 || x >= imageCanvas.Image.Image.Bounds().Dx() || y >= imageCanvas.Image.Image.Bounds().Dy())
