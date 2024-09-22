@@ -31,10 +31,6 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Pixim")
 
-	pixImage := pixim.NewPixImage()
-	cimg := canvas.NewImageFromImage(pixImage.Image)
-	cimg.ScaleMode = canvas.ImageScalePixels
-
 	ratio := 1.0
 	containerSize := fyne.NewSize(800, 800)
 
@@ -120,7 +116,7 @@ func main() {
 				return
 			}
 
-			pixImage.Fill(x, y, currentColor)
+			imageCanvas.PixImage.Fill(x, y, currentColor)
 			mainCanvas.Refresh()
 		}
 		if mode == Pencil {
@@ -128,7 +124,7 @@ func main() {
 				return
 			}
 
-			pixImage.Image.Set(x, y, currentColor)
+			imageCanvas.PixImage.Set(x, y, currentColor)
 			mainCanvas.Refresh()
 
 			prevPos = fyne.NewPos(float32(x), float32(y))
@@ -150,7 +146,7 @@ func main() {
 				return
 			}
 
-			pixImage.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, currentColor)
+			imageCanvas.PixImage.DrawLine(int(prevPos.X), int(prevPos.Y), x, y, currentColor)
 			mainCanvas.Refresh()
 
 			prevPos = fyne.NewPos(float32(x), float32(y))
@@ -218,7 +214,7 @@ func main() {
 									return
 								}
 
-								pixImage.Image = img.(*image.RGBA)
+								imageCanvas.ReplaceImage(img.(*image.RGBA))
 								mainCanvas.Refresh()
 							}, w).Show()
 						},
@@ -232,10 +228,17 @@ func main() {
 									return
 								}
 
-								if err := png.Encode(f, pixImage.Image); err != nil {
+								if err := png.Encode(f, imageCanvas.PixImage.Image); err != nil {
 									dialog.ShowError(err, w)
 									return
 								}
+
+								if err := f.Close(); err != nil {
+									dialog.ShowError(err, w)
+									return
+								}
+
+								dialog.ShowInformation("Saved", "Image saved successfully", w)
 							}, w).Show()
 						},
 					},

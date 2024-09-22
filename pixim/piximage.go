@@ -65,3 +65,7 @@ func (i *PixImage) DrawLine(x1, y1 int, x2, y2 int, color color.Color) {
 		i.Image.Set(x, y, color)
 	}
 }
+
+func (i *PixImage) Set(x, y int, color color.Color) {
+	i.Image.Set(x, y, color)
+}
