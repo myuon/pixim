@@ -88,10 +88,6 @@ func main() {
 		}
 
 		img := image.NewRGBA(image.Rect(0, 0, int(containerSize.Width), int(containerSize.Height)))
-		if editor.Ratio < 5 {
-			return img
-		}
-
 		for i := 0; i < int(containerSize.Width); i++ {
 			for j := 0; j < int(containerSize.Height); j++ {
 				if i%int(editor.Ratio) == 0 || j%int(editor.Ratio) == 0 {
@@ -105,7 +101,7 @@ func main() {
 
 		return img
 	})
-	grid.Resize(containerSize)
+	grid.Hide()
 	grid.ScaleMode = canvas.ImageScalePixels
 
 	imageCanvas := widgets.NewImageCanvas(editor.Image)
@@ -130,8 +126,16 @@ func main() {
 	prevPos := fyne.NewPos(0, 0)
 
 	editor.OnChangeRatio = func(ratio float64) {
-		imageCanvas.Resize(fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio)))
+		size := fyne.NewSize(float32(float64(imageCanvas.Image.Image.Bounds().Dx())*editor.Ratio), float32(float64(imageCanvas.Image.Image.Bounds().Dy())*editor.Ratio))
+		imageCanvas.Resize(size)
 		imageCanvas.Refresh()
+
+		if editor.Ratio < 5 {
+			grid.Hide()
+		} else {
+			grid.Resize(size)
+			grid.Show()
+		}
 	}
 	editor.OnChangeImage = func(img *pixim.PixImage) {
 		imageCanvas.ReplaceImage(img.Image)
@@ -366,8 +370,4 @@ func (m *MouseEventContainer) MouseIn(e *desktop.MouseEvent) {
 }
 
 func (m *MouseEventContainer) MouseOut() {
-}
-
-func (m *MouseEventContainer) Refresh() {
-	m.Container.Refresh()
 }
