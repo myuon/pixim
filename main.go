@@ -329,7 +329,6 @@ func main() {
 		),
 		mouseEventContainer,
 	)
-	mouseEventContainer.Refresh()
 
 	w.SetContent(content)
 	w.ShowAndRun()

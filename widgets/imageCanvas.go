@@ -17,7 +17,7 @@ type ImageCanvas struct {
 func NewImageCanvas(img *pixim.PixImage) *ImageCanvas {
 	cimg := canvas.NewImageFromImage(img.Image)
 	cimg.ScaleMode = canvas.ImageScalePixels
-	cimg.Resize(fyne.NewSize(100, 100))
+	cimg.Resize(fyne.NewSize(float32(img.Image.Bounds().Dx()), float32(img.Image.Bounds().Dy())))
 
 	item := &ImageCanvas{
 		PixImage: img,
