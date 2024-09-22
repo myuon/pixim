@@ -4,11 +4,13 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
@@ -110,7 +112,31 @@ func main() {
 					{
 						Label: "New",
 						Action: func() {
-							w.SetContent(widget.NewLabel("New content"))
+							width := widget.NewEntry()
+							width.Validator = validation.NewRegexp(`\d+`, "Width must be a number")
+
+							height := widget.NewEntry()
+							height.Validator = validation.NewRegexp(`\d+`, "Height must be a number")
+
+							dialog.ShowForm("Create new image", "Create", "Cancel", []*widget.FormItem{
+								widget.NewFormItem("Width", width),
+								widget.NewFormItem("Height", height),
+							}, func(b bool) {
+								if !b {
+									return
+								}
+
+								w, _ := strconv.Atoi(width.Text)
+								h, _ := strconv.Atoi(height.Text)
+
+								for i := 0; i < w; i++ {
+									for j := 0; j < h; j++ {
+										pixImage.Image.Set(i, j, color.White)
+									}
+								}
+
+								mainCanvas.Refresh()
+							}, w)
 						},
 					},
 					{
@@ -304,6 +330,7 @@ func (m *MainCanvas) MouseOut() {
 func (m *MainCanvas) Refresh() {
 	m.Image.SetMinSize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
 	m.Image.Resize(fyne.NewSize(float32(float64(m.Image.Image.Bounds().Dx())**m.Ratio), float32(float64(m.Image.Image.Bounds().Dy())**m.Ratio)))
+	m.Image.Refresh()
 	m.Widget.Refresh()
 }
 
