@@ -12,6 +12,7 @@ type MouseEventContainer struct {
 	OnMouseDown func(*desktop.MouseEvent)
 	OnMouseUp   func(*desktop.MouseEvent)
 	OnMouseMove func(*desktop.MouseEvent)
+	OnMouseOut  func()
 }
 
 var _ fyne.Widget = (*MouseEventContainer)(nil)
@@ -22,6 +23,10 @@ var _ desktop.Hoverable = (*MouseEventContainer)(nil)
 func NewMouseEventContainer(chilren fyne.CanvasObject) *MouseEventContainer {
 	item := &MouseEventContainer{
 		CanvasObject: chilren,
+		OnMouseDown:  func(e *desktop.MouseEvent) {},
+		OnMouseUp:    func(e *desktop.MouseEvent) {},
+		OnMouseMove:  func(e *desktop.MouseEvent) {},
+		OnMouseOut:   func() {},
 	}
 
 	return item
@@ -51,4 +56,5 @@ func (m *MouseEventContainer) MouseIn(e *desktop.MouseEvent) {
 }
 
 func (m *MouseEventContainer) MouseOut() {
+	m.OnMouseOut()
 }

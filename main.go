@@ -210,6 +210,7 @@ func main() {
 		}
 		if mode == Pencil && dragging {
 			if !contains {
+				dragging = false
 				return
 			}
 
