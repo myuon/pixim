@@ -138,8 +138,8 @@ func main() {
 		imageCanvas.Refresh()
 	}
 
-	mainCanvas := NewMainCanvas(children)
-	mainCanvas.OnMouseDown = func(e *desktop.MouseEvent) {
+	mouseEventContainer := NewMouseEventContainer(children)
+	mouseEventContainer.OnMouseDown = func(e *desktop.MouseEvent) {
 		pos := e.Position
 		x := int(float64(pos.X) / editor.Ratio)
 		y := int(float64(pos.Y) / editor.Ratio)
@@ -153,10 +153,10 @@ func main() {
 		if mode == Magnifier {
 			if e.Button == desktop.MouseButtonPrimary {
 				editor.SetRatio(editor.Ratio * 2)
-				mainCanvas.Refresh()
+				mouseEventContainer.Refresh()
 			} else if e.Button == desktop.MouseButtonSecondary {
 				editor.SetRatio(editor.Ratio / 2)
-				mainCanvas.Refresh()
+				mouseEventContainer.Refresh()
 			}
 		}
 		if mode == Fill {
@@ -177,7 +177,7 @@ func main() {
 			dragging = true
 		}
 	}
-	mainCanvas.OnMouseMove = func(e *desktop.MouseEvent) {
+	mouseEventContainer.OnMouseMove = func(e *desktop.MouseEvent) {
 		pos := e.Position
 		x := int(float64(pos.X) / editor.Ratio)
 		y := int(float64(pos.Y) / editor.Ratio)
@@ -195,7 +195,7 @@ func main() {
 			prevPos = fyne.NewPos(float32(x), float32(y))
 		}
 	}
-	mainCanvas.OnMouseUp = func(e *desktop.MouseEvent) {
+	mouseEventContainer.OnMouseUp = func(e *desktop.MouseEvent) {
 		if mode == Move {
 			dragging = false
 			// mainCanvas.MoveImage(fyne.NewPos(float32(e.Position.X-dragStart.X)+originalPos.X, float32(e.Position.Y-dragStart.Y)+originalPos.Y))
@@ -313,15 +313,15 @@ func main() {
 				).Show()
 			}),
 		),
-		mainCanvas,
+		mouseEventContainer,
 	)
-	mainCanvas.Refresh()
+	mouseEventContainer.Refresh()
 
 	w.SetContent(content)
 	w.ShowAndRun()
 }
 
-type MainCanvas struct {
+type MouseEventContainer struct {
 	*fyne.Container
 
 	OnMouseDown func(*desktop.MouseEvent)
@@ -329,45 +329,45 @@ type MainCanvas struct {
 	OnMouseMove func(*desktop.MouseEvent)
 }
 
-var _ fyne.Widget = (*MainCanvas)(nil)
-var _ desktop.Cursorable = (*MainCanvas)(nil)
-var _ desktop.Mouseable = (*MainCanvas)(nil)
-var _ desktop.Hoverable = (*MainCanvas)(nil)
+var _ fyne.Widget = (*MouseEventContainer)(nil)
+var _ desktop.Cursorable = (*MouseEventContainer)(nil)
+var _ desktop.Mouseable = (*MouseEventContainer)(nil)
+var _ desktop.Hoverable = (*MouseEventContainer)(nil)
 
-func NewMainCanvas(chilren *fyne.Container) *MainCanvas {
-	item := &MainCanvas{
+func NewMouseEventContainer(chilren *fyne.Container) *MouseEventContainer {
+	item := &MouseEventContainer{
 		Container: chilren,
 	}
 
 	return item
 }
 
-func (m *MainCanvas) CreateRenderer() fyne.WidgetRenderer {
+func (m *MouseEventContainer) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(m.Container)
 }
 
-func (m *MainCanvas) Cursor() desktop.Cursor {
+func (m *MouseEventContainer) Cursor() desktop.Cursor {
 	return desktop.PointerCursor
 }
 
-func (m *MainCanvas) MouseDown(e *desktop.MouseEvent) {
+func (m *MouseEventContainer) MouseDown(e *desktop.MouseEvent) {
 	m.OnMouseDown(e)
 }
 
-func (m *MainCanvas) MouseUp(e *desktop.MouseEvent) {
+func (m *MouseEventContainer) MouseUp(e *desktop.MouseEvent) {
 	m.OnMouseUp(e)
 }
 
-func (m *MainCanvas) MouseMoved(e *desktop.MouseEvent) {
+func (m *MouseEventContainer) MouseMoved(e *desktop.MouseEvent) {
 	m.OnMouseMove(e)
 }
 
-func (m *MainCanvas) MouseIn(e *desktop.MouseEvent) {
+func (m *MouseEventContainer) MouseIn(e *desktop.MouseEvent) {
 }
 
-func (m *MainCanvas) MouseOut() {
+func (m *MouseEventContainer) MouseOut() {
 }
 
-func (m *MainCanvas) Refresh() {
+func (m *MouseEventContainer) Refresh() {
 	m.Container.Refresh()
 }
