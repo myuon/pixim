@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"image/png"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -28,26 +29,6 @@ func main() {
 	pixImage := pixim.NewPixImage()
 	a := app.New()
 	w := a.NewWindow("Pixim")
-
-	w.SetMainMenu(&fyne.MainMenu{
-		Items: []*fyne.Menu{
-			{
-				Label: "File",
-				Items: []*fyne.MenuItem{
-					{
-						Label: "New",
-						Action: func() {
-							w.SetContent(widget.NewLabel("New content"))
-						},
-					},
-					{
-						Label:  "Open",
-						Action: func() { w.SetContent(widget.NewLabel("Open content")) },
-					},
-				},
-			},
-		},
-	})
 
 	cimg := canvas.NewImageFromImage(pixImage.Image)
 	cimg.ScaleMode = canvas.ImageScalePixels
@@ -120,6 +101,58 @@ func main() {
 			dragging = false
 		}
 	}
+
+	w.SetMainMenu(&fyne.MainMenu{
+		Items: []*fyne.Menu{
+			{
+				Label: "File",
+				Items: []*fyne.MenuItem{
+					{
+						Label: "New",
+						Action: func() {
+							w.SetContent(widget.NewLabel("New content"))
+						},
+					},
+					{
+						Label: "Open",
+						Action: func() {
+							dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
+								if err != nil {
+									dialog.ShowError(err, w)
+									return
+								}
+
+								img, _, err := image.Decode(f)
+								if err != nil {
+									dialog.ShowError(err, w)
+									return
+								}
+
+								pixImage.Image = img.(*image.RGBA)
+								mainCanvas.Refresh()
+							}, w).Show()
+						},
+					},
+					{
+						Label: "Save",
+						Action: func() {
+							dialog.NewFileSave(func(f fyne.URIWriteCloser, err error) {
+								if err != nil {
+									dialog.ShowError(err, w)
+									return
+								}
+
+								if err := png.Encode(f, pixImage.Image); err != nil {
+									dialog.ShowError(err, w)
+									return
+								}
+							}, w).Show()
+						},
+					},
+				},
+			},
+		},
+	})
 
 	content := container.NewHBox(
 		container.NewVBox(
