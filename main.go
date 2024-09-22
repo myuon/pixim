@@ -33,7 +33,8 @@ type Editor struct {
 	CurrentColor color.Color
 	View         fyne.CanvasObject
 
-	OnChangeImage        func(*pixim.PixImage)
+	OnUpdateImage        func(*pixim.PixImage)
+	OnReplaceImage       func(*pixim.PixImage)
 	OnChangeRatio        func(float64)
 	OnChangeCurrentColor func(color.Color)
 }
@@ -45,22 +46,22 @@ func (e *Editor) SetRatio(ratio float64) {
 
 func (e *Editor) SetImage(img *pixim.PixImage) {
 	e.Image = img
-	e.OnChangeImage(img)
+	e.OnReplaceImage(img)
 }
 
 func (e *Editor) Fill(x, y int) {
 	e.Image.Fill(x, y, e.CurrentColor)
-	e.OnChangeImage(e.Image)
+	e.OnUpdateImage(e.Image)
 }
 
 func (e *Editor) Paint(x, y int) {
 	e.Image.Set(x, y, e.CurrentColor)
-	e.OnChangeImage(e.Image)
+	e.OnUpdateImage(e.Image)
 }
 
 func (e *Editor) DrawLine(x1, y1, x2, y2 int) {
 	e.Image.DrawLine(x1, y1, x2, y2, e.CurrentColor)
-	e.OnChangeImage(e.Image)
+	e.OnUpdateImage(e.Image)
 }
 
 func (e *Editor) SetCurrentColor(c color.Color) {
@@ -106,12 +107,14 @@ func main() {
 		int(editor.Ratio),
 		color.RGBA{0xd0, 0xd0, 0xd0, 0xff},
 	)
-	gridLines.Hide()
+
+	gridHolder := container.New(&widgets.StackingLayout{}, gridLines)
+	gridHolder.Hide()
 
 	imageCanvas := widgets.NewImageCanvas(editor.Image)
 	imageCanvas.SetViewerRatio(1.0)
 
-	imgContainer := container.New(&widgets.StackingLayout{SkipLayoutChildren: true}, imageCanvas, gridLines)
+	imgContainer := container.New(&widgets.StackingLayout{SkipLayoutChildren: true}, imageCanvas, gridHolder)
 
 	scrollPosition := fyne.NewPos(0, 0)
 
@@ -137,15 +140,26 @@ func main() {
 		imageCanvas.SetViewerRatio(editor.Ratio)
 
 		if editor.Ratio < 5 {
-			gridLines.Hide()
+			gridHolder.Hide()
 		} else {
-			gridLines.Resize(size)
-			gridLines.Show()
+			gridHolder.Resize(size)
+			gridHolder.Show()
 		}
 	}
-	editor.OnChangeImage = func(img *pixim.PixImage) {
+	editor.OnUpdateImage = func(pi *pixim.PixImage) {
+		imageCanvas.Refresh()
+	}
+	editor.OnReplaceImage = func(img *pixim.PixImage) {
 		imageCanvas.ReplaceImage(img.Image)
 		imageCanvas.Refresh()
+
+		gridHolder.RemoveAll()
+		lines := widgets.NewGridLinesContainer(
+			fyne.NewSize(float32(img.Image.Bounds().Dx()), float32(img.Image.Bounds().Dy())),
+			1,
+			color.RGBA{0xd0, 0xd0, 0xd0, 0xff},
+		)
+		gridHolder.Add(lines)
 	}
 
 	mouseEventContainer := widgets.NewMouseEventContainer(children)
@@ -246,6 +260,7 @@ func main() {
 								}
 
 								editor.SetImage(&pixim.PixImage{Image: img})
+								editor.SetRatio(1.0)
 							}, w)
 						},
 					},
