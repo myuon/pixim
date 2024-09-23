@@ -36,6 +36,10 @@ func (i *PixImage) Fill(x, y int, color color.Color) {
 	i.Image.Set(x, y, color)
 
 	stack := []struct{ x, y int }{{x, y}}
+
+	visited := make(map[struct{ x, y int }]bool)
+	visited[struct{ x, y int }{x, y}] = true
+
 	for len(stack) > 0 {
 		pos := stack[0]
 		stack = stack[1:]
@@ -45,6 +49,12 @@ func (i *PixImage) Fill(x, y int, color color.Color) {
 			if next.x < 0 || next.y < 0 || next.x >= i.Image.Bounds().Dx() || next.y >= i.Image.Bounds().Dy() {
 				continue
 			}
+
+			if visited[next] {
+				continue
+			}
+
+			visited[next] = true
 
 			if i.Image.At(next.x, next.y) == original {
 				i.Image.Set(next.x, next.y, color)
