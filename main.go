@@ -4,6 +4,8 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log"
+	"os"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -70,11 +72,30 @@ func (e *Editor) SetCurrentColor(c color.Color) {
 }
 
 func main() {
+	pixImage := pixim.NewPixImage()
+
+	args := os.Args
+	if len(args) > 1 {
+		f, err := os.Open(args[1])
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		img, _, err := image.Decode(f)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		pixImage = &pixim.PixImage{Image: img.(*image.RGBA)}
+	}
+
 	a := app.New()
 	w := a.NewWindow("Pixim")
 
 	editor := Editor{
-		Image:        pixim.NewPixImage(),
+		Image:        pixImage,
 		Ratio:        1.0,
 		CurrentColor: color.Black,
 		View:         nil,
